@@ -1,4 +1,4 @@
-// ignore_for_file: public_member_api_docs, sort_constructors_first
+// ignore_for_file: public_member_api_docs, sort_constructors_first, prefer_const_constructors
 import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -102,7 +102,7 @@ class PokedexNotifier extends StateNotifier<PokedexState> {
     final response = await get(Uri.parse(url));
     final jsonMap = jsonDecode(response.body);
     final evolutionChainUrl = jsonMap['evolution_chain']?['url'];
-    var evolutionChain;
+    Map<String,dynamic>? evolutionChain;
     if (evolutionChainUrl != null) {
       final evolutionChainResponse = await get(Uri.parse(evolutionChainUrl));
       evolutionChain = jsonDecode(evolutionChainResponse.body);

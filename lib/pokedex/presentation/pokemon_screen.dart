@@ -31,27 +31,31 @@ class _PokemonScreenState extends ConsumerState<PokemonScreen> {
     });
   }
 
+  // algunos cálculos para posicionamiento
+  late final containerHeight = MediaQuery.of(context).size.height / 2;
+  late final width = MediaQuery.of(context).size.width;
+  static const pokemonDimensions = 220.0;
+  static const extraSize = 20.0;
+  late final pokemonVerticalPosition =
+      (containerHeight - pokemonDimensions) + extraSize;
+  late final pokemonHorizontalPosition = (width - pokemonDimensions) / 2;
+ 
   @override
   Widget build(BuildContext context) {
-    final containerHeight = MediaQuery.of(context).size.height / 2;
-    final width = MediaQuery.of(context).size.width;
-    const pokemonDimensions = 220.0;
-    final pokemonVerticalPosition = (containerHeight - pokemonDimensions) + 20;
-    final pokemonHorizontalPosition = (width - pokemonDimensions) / 2;
     return Container(
       color: widget.pokemon.containerColor(),
       child: Stack(
         children: [
           Positioned(
-              top: containerHeight - 125 * 1.2,
-              left: (width) - 125 * 1.2,
+              top: containerHeight - (pokemonDimensions - extraSize * 2),
+              left: (width) - (pokemonDimensions - extraSize * 2),
               child: PokeballPicture(
                 scale: 1.6,
                 color: widget.pokemon.onContainerColor(),
               )),
           Scaffold(
             backgroundColor: Colors.transparent,
-            appBar: _appBar(context),
+            appBar: const PokemonAppBar() ,
             body: Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -61,7 +65,7 @@ class _PokemonScreenState extends ConsumerState<PokemonScreen> {
               ],
             ),
           ),
-         Positioned(
+          Positioned(
               top: pokemonVerticalPosition,
               left: pokemonHorizontalPosition,
               child: PokemonAvatar(
@@ -73,7 +77,13 @@ class _PokemonScreenState extends ConsumerState<PokemonScreen> {
     );
   }
 
-  AppBar _appBar(BuildContext context) {
+}
+
+class PokemonAppBar extends StatelessWidget implements PreferredSizeWidget {
+  const PokemonAppBar({super.key});
+
+  @override
+  Widget build(BuildContext context) {
     return AppBar(
       leading: IconButton(
           onPressed: Navigator.of(context).pop,
@@ -93,4 +103,7 @@ class _PokemonScreenState extends ConsumerState<PokemonScreen> {
       ],
     );
   }
+
+  @override
+  Size get preferredSize => const Size(double.infinity, kToolbarHeight);
 }

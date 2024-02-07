@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:persistencia_flutter/core/constants/constants.dart';
 import 'package:persistencia_flutter/pokedex/presentation/controller/pokedex_controller.dart';
-import 'package:persistencia_flutter/pokedex/presentation/widgets/pokedex/pokedex_grid.dart';
+import 'package:persistencia_flutter/pokedex/presentation/widgets/pokedex/pokemon_grid.dart';
 import 'package:persistencia_flutter/pokedex/presentation/widgets/pokedex/pokedex_title.dart';
 import 'package:svg_flutter/svg_flutter.dart';
 
@@ -78,6 +78,7 @@ class _PokedexScreenState extends ConsumerState<PokedexScreen> {
   @override
   void dispose() {
     key.currentState?.dispose();
+    scrollController.dispose();
     super.dispose();
   }
 
