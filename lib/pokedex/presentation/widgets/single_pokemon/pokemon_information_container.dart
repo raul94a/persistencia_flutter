@@ -22,7 +22,7 @@ class PokemonInformationContainer extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8.0),
                 child: Text(
-                  pokemon.capitalizeFirstLetter(),
+                  pokemon.name.capitalizeFirst(),
                   style: const TextStyle(
                       color: Colors.white,
                       fontSize: 36,

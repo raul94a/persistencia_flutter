@@ -125,7 +125,7 @@ class Pokemon {
           .firstWhere((element) => element.name == this.name)
           .copyWith(name: name);
     }
-    // Si no hacemo esto salen los datos de evolucion de la primera ev. Necesitamos los de la segunda.
+    // Eliminamos la primera ev. Necesitamos los de la segunda.
     final currentEvolutionDetails = chain
         .firstWhere((element) => element.name == this.name)
         .evolutionDetails;
@@ -149,9 +149,7 @@ class Pokemon {
     return (pokemonTypesColors[types.first.name]!.onContainerColor);
   }
 
-  String capitalizeFirstLetter() {
-    return name.substring(0, 1).toUpperCase() + name.substring(1);
-  }
+ 
 
   Pokemon copyWith(
       {int? id,
