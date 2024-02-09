@@ -1,7 +1,8 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:persistencia_flutter/pokedex/data/pokemon.dart';
+import 'package:persistencia_flutter/pokedex/data/models/local/pokemon.dart';
+
 import 'package:svg_flutter/svg.dart';
 
 class PokemonAvatar extends StatelessWidget {
@@ -9,7 +10,7 @@ class PokemonAvatar extends StatelessWidget {
     super.key,
     required this.pokemon,
   });
-  final Pokemon pokemon;
+  final PokemonEntity pokemon;
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -18,15 +19,12 @@ class PokemonAvatar extends StatelessWidget {
         Positioned(
           right: 0,
           top: 0,
-          child: SvgPicture.asset(
-            'assets/pokeball.svg',
-            fit: BoxFit.fill,
-            width: 80,
-            height: 80,
-            // ignore: deprecated_member_use
-            color: pokemon.onContainerColor()
-          
-          ),
+          child: SvgPicture.asset('assets/pokeball.svg',
+              fit: BoxFit.fill,
+              width: 80,
+              height: 80,
+              // ignore: deprecated_member_use
+              color: pokemon.onContainerColor()),
         ),
         Positioned(
           right: 0,
@@ -76,7 +74,6 @@ class _PokemonPictureState extends State<PokemonPicture>
 
   @override
   Widget build(BuildContext context) {
-    
     return Hero(
       flightShuttleBuilder: (flightContext, animation, flightDirection,
           fromHeroContext, toHeroContext) {
@@ -120,9 +117,6 @@ class _PokemonPictureState extends State<PokemonPicture>
     );
   }
 }
-
-
-
 
 class PeakQuadraticCurve extends Curve {
   @override

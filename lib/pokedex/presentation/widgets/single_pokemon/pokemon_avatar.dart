@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:persistencia_flutter/pokedex/data/pokemon.dart';
-import 'package:svg_flutter/svg.dart';
+import 'package:persistencia_flutter/pokedex/data/models/local/pokemon.dart';
 
+import 'package:svg_flutter/svg.dart';
 
 class PokemonAvatar extends StatelessWidget {
   const PokemonAvatar({
@@ -10,7 +10,7 @@ class PokemonAvatar extends StatelessWidget {
     required this.imageDimensions,
   });
 
-  final Pokemon pokemon;
+  final PokemonEntity pokemon;
   final double imageDimensions;
   @override
   Widget build(BuildContext context) {

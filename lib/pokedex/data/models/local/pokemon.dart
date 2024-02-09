@@ -1,25 +1,28 @@
-import 'dart:convert';
-
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:persistencia_flutter/pokedex/data/species.dart';
-import 'package:persistencia_flutter/pokedex/data/stat.dart';
-import 'package:persistencia_flutter/pokedex/data/type.dart';
+import 'package:persistencia_flutter/pokedex/data/models/local/move_entity.dart';
+import 'package:persistencia_flutter/pokedex/data/models/local/species.dart';
+import 'package:persistencia_flutter/pokedex/data/models/local/stat.dart';
+import 'package:persistencia_flutter/pokedex/data/models/local/type.dart';
+import 'package:persistencia_flutter/pokedex/data/models/remote/pokemon_dto.dart';
+
 import 'package:persistencia_flutter/styles/pokemon_types_color.dart';
 
-class Pokemon {
+class PokemonEntity {
   final int id;
   final String name;
-  final List<Type> types;
+  final List<TypeEntity> types;
   final String imageUrl;
-  final List<Stat> stats;
+  final List<StatEntity> stats;
   final List<String> abilities;
   final num weight;
   final num height;
-  final Species? species;
-  const Pokemon({
+  final List<MoveEntity> moves;
+  final List<Move> movesReference;
+  final SpeciesEntity? species;
+  const PokemonEntity({
     required this.abilities,
     required this.id,
+    required this.movesReference,
     required this.name,
     required this.types,
     required this.imageUrl,
@@ -27,6 +30,7 @@ class Pokemon {
     required this.height,
     required this.weight,
     this.species,
+    required this.moves,
   });
 
   List<DamageCoefficients> getDamageCoefficients() {
@@ -74,14 +78,14 @@ class Pokemon {
     return coefficients..sort((a, b) => a.coefficient.compareTo(b.coefficient));
   }
 
-  List<Evolution> getEvolutionChainCleaned() {
+  List<EvolutionEntity> getEvolutionChainCleaned() {
     print('Calling getEvolutionChain with species: $species');
     if (species == null || species?.evolutionChain == null) {
       return [];
     }
     final evolutionChain = species!.evolutionChain!;
-    final evolutions = <Evolution>[];
-    Evolution? currentEvolution = evolutionChain.evolution;
+    final evolutions = <EvolutionEntity>[];
+    EvolutionEntity? currentEvolution = evolutionChain.evolution;
     evolutions.add(currentEvolution);
     while (currentEvolution != null) {
       currentEvolution = currentEvolution.evolution;
@@ -95,14 +99,14 @@ class Pokemon {
     return evolutions;
   }
 
-  List<Evolution> getFullEvolutionChain() {
+  List<EvolutionEntity> getFullEvolutionChain() {
     print('Calling getEvolutionChain with species: $species');
     if (species == null || species?.evolutionChain == null) {
       return [];
     }
     final evolutionChain = species!.evolutionChain!;
-    final evolutions = <Evolution>[];
-    Evolution? currentEvolution = evolutionChain.evolution;
+    final evolutions = <EvolutionEntity>[];
+    EvolutionEntity? currentEvolution = evolutionChain.evolution;
     evolutions.add(currentEvolution);
     while (currentEvolution != null) {
       currentEvolution = currentEvolution.evolution;
@@ -116,7 +120,7 @@ class Pokemon {
 
   // Este puede ser un poco más confuso, pero únicamente
   // generamos los datos adecuados para cada caso
-  Evolution getEvolution(String name) {
+  EvolutionEntity getEvolution(String name) {
     final evolutionChain = species!.evolutionChain;
     final chain = getFullEvolutionChain();
     if (evolutionChain!.name == name) {
@@ -149,76 +153,48 @@ class Pokemon {
     return (pokemonTypesColors[types.first.name]!.onContainerColor);
   }
 
- 
-
-  Pokemon copyWith(
+  PokemonEntity copyWith(
       {int? id,
       String? name,
-      List<Type>? types,
+      List<TypeEntity>? types,
       String? imageUrl,
-      List<Stat>? stats,
+      List<StatEntity>? stats,
       List<String>? abilities,
       num? weight,
       num? height,
-      Species? species}) {
-    return Pokemon(
-      id: id ?? this.id,
-      name: name ?? this.name,
-      types: types ?? this.types,
-      species: species ?? this.species,
-      imageUrl: imageUrl ?? this.imageUrl,
-      stats: stats ?? this.stats,
-      abilities: abilities ?? this.abilities,
-      weight: weight ?? this.weight,
-      height: height ?? this.height,
-    );
+      List<MoveEntity>? moves,
+      SpeciesEntity? species}) {
+    return PokemonEntity(
+        id: id ?? this.id,
+        movesReference: movesReference,
+        name: name ?? this.name,
+        types: types ?? this.types,
+        species: species ?? this.species,
+        imageUrl: imageUrl ?? this.imageUrl,
+        stats: stats ?? this.stats,
+        abilities: abilities ?? this.abilities,
+        weight: weight ?? this.weight,
+        height: height ?? this.height,
+        moves: moves ?? this.moves);
   }
 
-  factory Pokemon.fromMap(Map<String, dynamic> map) {
-    return Pokemon(
-      id: map['id'],
-      abilities: (map['abilities'] as List<dynamic>)
-          .map((e) => e['ability']['name'] as String)
-          .toList(),
-      height: map['height'],
-      weight: map['weight'],
-      stats:
-          (map['stats'] as List<dynamic>).map((e) => Stat.fromMap(e)).toList(),
-      name: map['name'] ?? '',
-      types: (map['types'] as List<dynamic>)
-          .map((e) => Type.fromMap(e['type']))
-          .toList(),
-      imageUrl: map['sprites']['other']['dream_world']['front_default'] ?? '',
-    );
+  factory PokemonEntity.fromDto(PokemonDto dto) {
+    return PokemonEntity(
+      movesReference: dto.moves,
+        abilities: dto.abilities.map((e) => e.ability.name).toList(),
+        id: dto.id,
+        name: dto.name,
+        types: dto.types
+            .map((e) => TypeEntity(name: e.type.name, slot: e.slot))
+            .toList(),
+        imageUrl: dto.sprites.other.dreamWorld?.frontDefault ??
+            dto.sprites.frontDefault,
+        stats: dto.stats.map(StatEntity.fromDto).toList(),
+        height: dto.height,
+        moves: [],
+        weight: dto.weight);
   }
 
-  factory Pokemon.fromJson(String source) =>
-      Pokemon.fromMap(json.decode(source));
-
-  @override
-  String toString() =>
-      'Pokemon(name: $name, types: $types, imageUrl: $imageUrl)';
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-
-    return other is Pokemon &&
-        other.name == name &&
-        listEquals(other.types, types) &&
-        other.imageUrl == imageUrl;
-  }
-
-  @override
-  int get hashCode => name.hashCode ^ types.hashCode ^ imageUrl.hashCode;
-
-  Map<String, dynamic> toMap() {
-    return {
-      'name': name,
-      'types': types,
-      'imageUrl': imageUrl,
-    };
-  }
-
-  String toJson() => json.encode(toMap());
+  String get pokemonSpeciesUrl =>
+      'https://pokeapi.co/api/v2/pokemon-species/$id';
 }

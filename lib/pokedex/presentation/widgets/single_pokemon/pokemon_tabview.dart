@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:persistencia_flutter/core/extensions/string_extensions.dart';
-import 'package:persistencia_flutter/pokedex/data/pokemon.dart';
-import 'package:persistencia_flutter/pokedex/data/species.dart';
-import 'package:persistencia_flutter/pokedex/data/type.dart';
+import 'package:persistencia_flutter/pokedex/data/models/local/pokemon.dart';
+import 'package:persistencia_flutter/pokedex/data/models/local/species.dart';
+import 'package:persistencia_flutter/pokedex/data/models/local/type.dart';
+
 import 'package:persistencia_flutter/pokedex/presentation/controller/pokedex_controller.dart';
 import 'package:persistencia_flutter/styles/pokemon_types_color.dart';
 import 'package:svg_flutter/svg_flutter.dart';
@@ -16,7 +17,7 @@ class PokemonTabView extends StatelessWidget {
   });
 
   final double containerHeight;
-  final Pokemon pokemon;
+  final PokemonEntity pokemon;
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +61,7 @@ class PokemonTabView extends StatelessWidget {
                   ),
                   StatsTab(pokemon: pokemon),
                   EvolutionTab(pokemonID: pokemon.id),
-                  const SizedBox.expand()
+                  MovementsTab(pokemon: pokemon)
                 ]),
               ),
             )
@@ -162,7 +163,7 @@ class _EvolutionChainPokemon extends StatelessWidget {
   });
 
   final String? image;
-  final Evolution evolution;
+  final EvolutionEntity evolution;
 
   @override
   Widget build(BuildContext context) {
@@ -208,7 +209,7 @@ class StatsTab extends ConsumerWidget {
     required this.pokemon,
   });
 
-  final Pokemon pokemon;
+  final PokemonEntity pokemon;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -384,7 +385,7 @@ class AboutTab extends ConsumerWidget {
     super.key,
     required this.pokemon,
   });
-  final Pokemon pokemon;
+  final PokemonEntity pokemon;
   @override
   Widget build(BuildContext context, ref) {
     return Column(
@@ -472,6 +473,102 @@ class _AboutRow extends StatelessWidget {
                 style:
                     const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           )
+        ],
+      ),
+    );
+  }
+}
+
+class MovementsTab extends ConsumerWidget {
+  const MovementsTab({
+    super.key,
+    required this.pokemon,
+  });
+
+  final PokemonEntity pokemon;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final loadingMovements =
+        ref.watch(pokedexProvider.select((value) => value.loadingMovements));
+    print('LAODING MOVMENETS: $loadingMovements');
+    if (loadingMovements) {
+      return Center(
+        child: CircularProgressIndicator(
+          color: pokemon.containerColor(),
+        ),
+      );
+    }
+
+    final watchedPokemon = ref.watch(pokedexProvider.select((value) =>
+        value.pokemons.firstWhere((element) => element.id == pokemon.id)));
+    final movements = watchedPokemon.moves;
+
+    movements.sort((a, b) => a.type.compareTo(b.type));
+    return ListView.separated(
+        separatorBuilder: (context, index) => const Divider(),
+        itemCount: watchedPokemon.moves.length,
+        itemBuilder: (ctx, i) {
+          final movement = movements[i];
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4.0),
+            child: ListTile(
+              title: Text(movement.name.capitalizeFirst()),
+              subtitle: Column(
+                children: [
+                  _MovementSubtitle(
+                    title: 'Accuracy',
+                    value: movement.accuracy?.toString() ?? '-',
+                  ),
+                  _MovementSubtitle(
+                    title: 'Power',
+                    value: movement.power?.toString() ?? '-',
+                  ),
+                  _MovementSubtitle(
+                    title: 'Power points',
+                    value: movement.pp?.toString() ?? '-',
+                  ),
+                ],
+              ),
+              trailing: Container(
+                width: 100,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: pokemonTypesColors[movement.type]!.containerColor,
+                  borderRadius: BorderRadius.circular(14.0),
+                ),
+                child: Center(
+                  child: Text(
+                    movement.type,
+                    style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white),
+                  ),
+                ),
+              ),
+            ),
+          );
+        });
+  }
+}
+
+class _MovementSubtitle extends StatelessWidget {
+  const _MovementSubtitle({required this.title, required this.value});
+
+  final String title;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          SizedBox(width: 100, child: Text(title)),
+          Text(value),
+          const SizedBox(width: 10.0)
         ],
       ),
     );

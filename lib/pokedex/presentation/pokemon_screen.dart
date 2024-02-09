@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:persistencia_flutter/pokedex/data/pokemon.dart';
+import 'package:persistencia_flutter/pokedex/data/models/local/pokemon.dart';
 import 'package:persistencia_flutter/pokedex/presentation/controller/pokedex_controller.dart';
 import 'package:persistencia_flutter/pokedex/presentation/pokedex_screen.dart';
 import 'package:persistencia_flutter/pokedex/presentation/widgets/single_pokemon/pokemon_avatar.dart';
@@ -9,7 +9,7 @@ import 'package:persistencia_flutter/pokedex/presentation/widgets/single_pokemon
 
 class PokemonScreen extends ConsumerStatefulWidget {
   const PokemonScreen({super.key, required this.pokemon});
-  final Pokemon pokemon;
+  final PokemonEntity pokemon;
 
   @override
   ConsumerState<PokemonScreen> createState() => _PokemonScreenState();
@@ -22,11 +22,9 @@ class _PokemonScreenState extends ConsumerState<PokemonScreen> {
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) {
       ref
           .read(pokedexProvider.notifier)
-          .loadPokemonDamageRelations(widget.pokemon.id)
+          .loadPokemonSpecies(widget.pokemon.id)
           .then((value) {
-        ref
-            .read(pokedexProvider.notifier)
-            .loadPokemonSpecies(widget.pokemon.id);
+        ref.read(pokedexProvider.notifier).loadPokemonMovements(widget.pokemon);
       });
     });
   }
@@ -39,7 +37,7 @@ class _PokemonScreenState extends ConsumerState<PokemonScreen> {
   late final pokemonVerticalPosition =
       (containerHeight - pokemonDimensions) + extraSize;
   late final pokemonHorizontalPosition = (width - pokemonDimensions) / 2;
- 
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -55,7 +53,7 @@ class _PokemonScreenState extends ConsumerState<PokemonScreen> {
               )),
           Scaffold(
             backgroundColor: Colors.transparent,
-            appBar: const PokemonAppBar() ,
+            appBar: const PokemonAppBar(),
             body: Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -76,7 +74,6 @@ class _PokemonScreenState extends ConsumerState<PokemonScreen> {
       ),
     );
   }
-
 }
 
 class PokemonAppBar extends StatelessWidget implements PreferredSizeWidget {

@@ -1,27 +1,28 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first, prefer_const_constructors
-import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:http/http.dart';
-import 'package:persistencia_flutter/pokedex/data/pokemon.dart';
-import 'package:persistencia_flutter/pokedex/data/species.dart';
-import 'package:persistencia_flutter/pokedex/data/type.dart';
+import 'package:persistencia_flutter/pokedex/data/models/local/pokemon.dart';
+import 'package:persistencia_flutter/pokedex/data/repositories/pokemon_repository.dart';
+import 'package:persistencia_flutter/pokedex/data/source/remote/pokemon_api.dart';
 
 final pokedexProvider = StateNotifierProvider<PokedexNotifier, PokedexState>(
     (ref) => PokedexNotifier(PokedexState(pokemons: [])));
 
 class PokedexState {
-  final List<Pokemon> pokemons;
+  final List<PokemonEntity> pokemons;
   final bool loading;
+  final bool loadingMovements;
 
-  const PokedexState({
-    required this.pokemons,
-    this.loading = false,
-  });
+  const PokedexState(
+      {required this.pokemons,
+      this.loading = false,
+      this.loadingMovements = false});
 
-  PokedexState copyWith({List<Pokemon>? pokemons, bool? loading}) {
+  PokedexState copyWith(
+      {List<PokemonEntity>? pokemons, bool? loading, bool? loadingMovements}) {
     return PokedexState(
       loading: loading ?? this.loading,
+      loadingMovements: loadingMovements ?? this.loadingMovements,
       pokemons: pokemons ?? this.pokemons,
     );
   }
@@ -36,83 +37,43 @@ class PokedexState {
 }
 
 class PokedexNotifier extends StateNotifier<PokedexState> {
+  final PokemonRepository repository =
+      PokemonRepository(pokemonApi: PokemonApi());
   PokedexNotifier(super._state);
 
   Future<void> loadPokemons(int offset, int limit) async {
     state = state.copyWith(loading: true);
     try {
       final currentPokemons = state.pokemons;
-      final url =
-          'https://pokeapi.co/api/v2/pokemon?offset=$offset&limit=$limit';
-      final response = await get(Uri.parse(url));
-      final jsonMap = jsonDecode(response.body);
-      final results = jsonMap['results'] as List<dynamic>
-        ..cast<Map<String, dynamic>>();
-      final fetchedPokemon = <Pokemon>[];
-      for (final result in results) {
-        final url = result['url'];
-        final pokemonResponse = await get(Uri.parse(url));
-        final pokemonMap = jsonDecode(pokemonResponse.body);
-        final pokemon = Pokemon.fromMap(pokemonMap);
-        fetchedPokemon.add(pokemon);
-      }
-      currentPokemons.addAll(fetchedPokemon);
+      final newPokemons = await repository.loadPokemons(offset, limit);
+      currentPokemons.addAll(newPokemons);
       state = state.copyWith(pokemons: [...currentPokemons]);
     } finally {
       state = state.copyWith(loading: false);
     }
   }
 
-  Future<Pokemon> getPokemon(String url) async {
-    final response = await get(Uri.parse(url));
-    final pokemon = Pokemon.fromJson(response.body);
-    return pokemon;
-  }
-
-  Future<void> loadPokemonDamageRelations(int pokemonID) async {
-    final index =
-        state.pokemons.indexWhere((element) => element.id == pokemonID);
-    if (index == -1) {
-      return;
-    }
-    var pokemon = state.pokemons[index];
-    final types = pokemon.types;
-    for (var i = 0; i < types.length; i++) {
-      var type = types[i];
-      if (type.damageRelation != null) {
-        continue;
-      }
-      final response = await get(Uri.parse(type.url));
-      final jsonMap = jsonDecode(response.body)['damage_relations'];
-      final damageRelation = DamageRelation.fromMap(jsonMap);
-      type = type.copyWith(damageRelation: damageRelation);
-      types[i] = type;
-    }
-    pokemon = pokemon.copyWith(types: [...types]);
-    state.pokemons[index] = pokemon;
-    state = state.copyWith(pokemons: [...state.pokemons]);
-  }
-
   Future<void> loadPokemonSpecies(int pokemonID) async {
     final index =
         state.pokemons.indexWhere((element) => element.id == pokemonID);
-    var pokemon = state.pokemons[index];
-    final url = 'https://pokeapi.co/api/v2/pokemon-species/$pokemonID';
+    final pokemonList = [...state.pokemons];
+    var pokemon = pokemonList[index];
 
-    final response = await get(Uri.parse(url));
-    final jsonMap = jsonDecode(response.body);
-    final evolutionChainUrl = jsonMap['evolution_chain']?['url'];
-    Map<String,dynamic>? evolutionChain;
-    if (evolutionChainUrl != null) {
-      final evolutionChainResponse = await get(Uri.parse(evolutionChainUrl));
-      evolutionChain = jsonDecode(evolutionChainResponse.body);
-    }
+    pokemon = await repository.loadPokemonSpecies(pokemon);
+    pokemonList[index] = pokemon;
+    state = state.copyWith(pokemons: [...pokemonList]);
+  }
 
-    jsonMap['evolution_chain'] = evolutionChain;
-    final species = Species.fromMap(jsonMap);
-    pokemon = pokemon.copyWith(species: species);
-    state.pokemons[index] = pokemon;
-    state = state.copyWith(pokemons: [...state.pokemons]);
+  void loadPokemonMovements(PokemonEntity pokemon) {
+    state = state.copyWith(loadingMovements: true);
+    final pokemonList = [...state.pokemons];
+    final pokemonIndex =
+        pokemonList.indexWhere((element) => element.id == pokemon.id);
+
+    final movements = repository.loadPokemonMovements(pokemon).moves;
+    final updatedPokemon = pokemonList[pokemonIndex].copyWith(moves: movements);
+
+    pokemonList[pokemonIndex] = updatedPokemon;
+    state = state.copyWith(pokemons: [...pokemonList], loadingMovements: false);
   }
 }
-

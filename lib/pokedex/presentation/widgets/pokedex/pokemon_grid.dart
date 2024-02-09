@@ -2,7 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:persistencia_flutter/core/extensions/string_extensions.dart';
-import 'package:persistencia_flutter/pokedex/data/pokemon.dart';
+import 'package:persistencia_flutter/pokedex/data/models/local/pokemon.dart';
+
 import 'package:persistencia_flutter/pokedex/presentation/controller/pokedex_controller.dart';
 import 'package:persistencia_flutter/pokedex/presentation/pokemon_screen.dart';
 import 'package:persistencia_flutter/pokedex/presentation/widgets/pokedex/pokemon_avatar.dart';
@@ -16,7 +17,6 @@ class PokemonGrid extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final pokemons =
         ref.watch(pokedexProvider.select((value) => value.pokemons));
-
 
     return GridView.builder(
         controller: scrollController,
@@ -40,7 +40,7 @@ class PokemonGridContainer extends StatelessWidget {
     required this.pokemon,
   });
 
-  final Pokemon pokemon;
+  final PokemonEntity pokemon;
 
   @override
   Widget build(BuildContext context) {
