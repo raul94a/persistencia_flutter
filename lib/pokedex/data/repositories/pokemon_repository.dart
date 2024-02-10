@@ -1,4 +1,7 @@
-import 'package:flutter/material.dart';
+import 'dart:developer';
+import 'dart:isolate';
+
+import 'package:flutter/foundation.dart';
 import 'package:persistencia_flutter/pokedex/data/models/local/move_entity.dart';
 import 'package:persistencia_flutter/pokedex/data/models/local/pokemon.dart';
 import 'package:persistencia_flutter/pokedex/data/models/local/species.dart';
@@ -22,18 +25,20 @@ class PokemonRepository {
     }
   }
 
-  Future<void> _loadMovementsFromPokemonDto(List<PokemonDto> pokemons) async {
+  Stream<MoveEntity?> _loadMovementsFromPokemonDto(
+      List<PokemonDto> pokemons, Map<String, MoveEntity> movesCache) async* {
     for (final pokemon in pokemons) {
       final moves = pokemon.moves;
       for (final move in moves) {
-        if (_movesCache[move.move.name] == null) {
-          debugPrint('Cargando movimiento ${move.move.name}');
+        if (movesCache[move.move.name] == null) {
           final moveDto = await pokemonApi.getMove(move.move.url);
           final entity = MoveEntity.fromDto(moveDto);
-          _movesCache.putIfAbsent(entity.name, () => entity);
+          movesCache.putIfAbsent(entity.name, () => entity);
+          yield entity;
         }
       }
     }
+    yield null;
   }
 
   Future<List<PokemonEntity>> loadPokemons(int offset, int limit) async {
@@ -42,7 +47,25 @@ class PokemonRepository {
     }
     final data =
         await pokemonApi.getPokemonPagination(offset: offset, limit: limit);
-    _loadMovementsFromPokemonDto(data);
+
+    final receivePort = ReceivePort();
+    receivePort.listen((message) {
+      if (message == null) {
+        receivePort.close();
+        debugPrint('Cerrando isolate');
+        return;
+      }
+      final moveEntity = message as MoveEntity;
+      // debugPrint('Añadiendo movimiento ${moveEntity.name} al caché');
+      _movesCache.putIfAbsent(moveEntity.name, () => moveEntity);
+    });
+
+    final sendPort = receivePort.sendPort;
+    final message = FetchMoveMessage(
+        pokemon: data, sendPort: sendPort, movesCache: _movesCache);
+
+    message.startIsolateWith(_loadMovementsFromPokemonDto);
+
     return data.map((pokemonDto) {
       final pokemonEntity = PokemonEntity.fromDto(pokemonDto);
       final types = pokemonEntity.types;
@@ -80,5 +103,29 @@ class PokemonRepository {
       }
     }
     return pokemon.copyWith(moves: [...movements]);
+  }
+}
+
+class FetchMoveMessage {
+  final List<PokemonDto> pokemon;
+  final SendPort sendPort;
+  final Map<String, MoveEntity> movesCache;
+
+  const FetchMoveMessage(
+      {required this.pokemon,
+      required this.sendPort,
+      required this.movesCache});
+
+  void startIsolateWith(
+      Stream<MoveEntity?> Function(List<PokemonDto>, Map<String, MoveEntity>)
+          fetchMovesHandler) {
+    Isolate.spawn((message) async {
+      final isolateId = Service.getIsolateId(Isolate.current);
+      debugPrint('Iniciando $isolateId');
+      final stream = fetchMovesHandler(message.pokemon, message.movesCache);
+      await for (final data in stream) {
+        message.sendPort.send(data);
+      }
+    }, this);
   }
 }

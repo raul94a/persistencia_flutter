@@ -1,6 +1,4 @@
-import 'dart:convert';
 
-import 'package:flutter/widgets.dart';
 import 'package:persistencia_flutter/pokedex/data/models/remote/move_dto.dart';
 
 class MoveEntity {
@@ -44,7 +42,7 @@ class MoveEntity {
       power: dto.power,
       accuracy: dto.accuracy,
       pp: dto.pp);
-      
+
   Map<String, dynamic> toMap() {
     return {
       'id': id,
