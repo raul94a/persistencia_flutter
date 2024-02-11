@@ -51,6 +51,12 @@ class PokemonApi {
     return types;
   }
 
+  Future<PokemonDto> getSinglePokemon(String name) async {
+    final url = 'https://pokeapi.co/api/v2/pokemon/$name';
+    final response = await http.get(Uri.parse(url));
+    return PokemonDto.fromRawJson(response.body);
+  }
+
   Future<Map<String, dynamic>> fetchSingle(String url) async {
     final response = await http.get(Uri.parse(url));
 

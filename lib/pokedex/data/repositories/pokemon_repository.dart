@@ -104,6 +104,11 @@ class PokemonRepository {
     }
     return pokemon.copyWith(moves: [...movements]);
   }
+
+  Future<PokemonEntity> getSinglePokemonFromRemote(String name) async {
+    final dto = await pokemonApi.getSinglePokemon(name);
+    return PokemonEntity.fromDto(dto);
+  }
 }
 
 class FetchMoveMessage {

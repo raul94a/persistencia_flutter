@@ -80,10 +80,7 @@ class EvolutionTab extends ConsumerWidget {
     final pokemon = ref.watch(pokedexProvider.select((value) =>
         value.pokemons.firstWhere((element) => element.id == pokemonID)));
     final evolutionChain = pokemon.getEvolutionChainCleaned();
-    String? evolveFromImageUrl;
-    if (pokemon.species?.evolvesFrom != null) {
-      evolveFromImageUrl = getPokemonImage(ref, pokemon.species!.evolvesFrom!);
-    }
+
     return SingleChildScrollView(
       child: Column(
         children: [
@@ -92,8 +89,7 @@ class EvolutionTab extends ConsumerWidget {
           ),
           // evolves from
 
-          if (pokemon.species?.evolvesFrom != null &&
-              evolveFromImageUrl != null)
+          if (pokemon.species?.evolvesFrom != null)
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -104,10 +100,23 @@ class EvolutionTab extends ConsumerWidget {
                 const SizedBox(
                   height: 10,
                 ),
-                _EvolutionChainPokemon(
-                    image: getPokemonImage(ref, pokemon.species!.evolvesFrom!),
-                    evolution:
-                        pokemon.getEvolution(pokemon.species!.evolvesFrom!)),
+                FutureBuilder(
+                    future: getPokemonImage(ref, pokemon.species!.evolvesFrom!),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const SizedBox(
+                          height: 30,
+                          width: 30,
+                          child: CircularProgressIndicator(),
+                        );
+                      }
+                      final data = snapshot.data;
+
+                      return _EvolutionChainPokemon(
+                          image: data,
+                          evolution: pokemon
+                              .getEvolution(pokemon.species!.evolvesFrom!));
+                    }),
                 const SizedBox(
                   height: 10,
                 )
@@ -135,8 +144,21 @@ class EvolutionTab extends ConsumerWidget {
                     itemBuilder: (ctx, i) {
                       final evolution = evolutionChain[i];
                       final image = getPokemonImage(ref, evolution.name);
-                      return _EvolutionChainPokemon(
-                          image: image, evolution: evolution);
+                      return FutureBuilder(
+                          future: image,
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const SizedBox(
+                                height: 30,
+                                width: 30,
+                                child: CircularProgressIndicator(),
+                              );
+                            }
+                            final data = snapshot.data;
+                            return _EvolutionChainPokemon(
+                                image: data, evolution: evolution);
+                          });
                     }),
               ],
             )
@@ -145,10 +167,10 @@ class EvolutionTab extends ConsumerWidget {
     );
   }
 
-  String? getPokemonImage(WidgetRef ref, String name) {
-    final provider = ref.read(pokedexProvider);
+  Future<String?> getPokemonImage(WidgetRef ref, String name) async {
+    final notifier = ref.read(pokedexProvider.notifier);
     try {
-      return provider.getImageByName(name);
+      return await notifier.getImageFromPokemon(name);
     } catch (e) {
       return null;
     }

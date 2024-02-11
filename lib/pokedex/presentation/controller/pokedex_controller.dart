@@ -44,8 +44,8 @@ class PokedexNotifier extends StateNotifier<PokedexState> {
   Future<void> loadPokemons(int offset, int limit) async {
     state = state.copyWith(loading: true);
     try {
-      final currentPokemons = state.pokemons;
       final newPokemons = await repository.loadPokemons(offset, limit);
+      final currentPokemons = state.pokemons;
       currentPokemons.addAll(newPokemons);
       state = state.copyWith(pokemons: [...currentPokemons]);
     } finally {
@@ -75,5 +75,10 @@ class PokedexNotifier extends StateNotifier<PokedexState> {
 
     pokemonList[pokemonIndex] = updatedPokemon;
     state = state.copyWith(pokemons: [...pokemonList], loadingMovements: false);
+  }
+
+  Future<String> getImageFromPokemon(String name) async {
+    final pokemon = await repository.getSinglePokemonFromRemote(name);
+    return pokemon.imageUrl;
   }
 }
