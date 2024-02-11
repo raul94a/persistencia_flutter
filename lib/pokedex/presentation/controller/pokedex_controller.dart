@@ -78,7 +78,11 @@ class PokedexNotifier extends StateNotifier<PokedexState> {
   }
 
   Future<String> getImageFromPokemon(String name) async {
-    final pokemon = await repository.getSinglePokemonFromRemote(name);
-    return pokemon.imageUrl;
+    try {
+      return state.getImageByName(name);
+    } catch (e) {
+      final pokemon = await repository.getSinglePokemonFromRemote(name);
+      return pokemon.imageUrl;
+    }
   }
 }

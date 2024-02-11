@@ -105,8 +105,8 @@ class EvolutionTab extends ConsumerWidget {
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const SizedBox(
-                          height: 30,
-                          width: 30,
+                          height: 10,
+                          width: 10,
                           child: CircularProgressIndicator(),
                         );
                       }
@@ -150,8 +150,8 @@ class EvolutionTab extends ConsumerWidget {
                             if (snapshot.connectionState ==
                                 ConnectionState.waiting) {
                               return const SizedBox(
-                                height: 30,
-                                width: 30,
+                                height: 10,
+                                width: 10,
                                 child: CircularProgressIndicator(),
                               );
                             }
