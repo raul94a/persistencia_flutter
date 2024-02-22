@@ -7,7 +7,9 @@ CREATE TABLE `stats` (
     defense INTEGER,
     special_attack INTEGER,
     special_defense INTEGER,
+    pokemon_id INTEGER,
     CONSTRAINT stats_pk PRIMARY KEY (id)
+    CONSTRAINT fk_stats_pokemon FOREIGN KEY (pokemon_id) REFERENCES pokemon(id)
 )
 
 CREATE TABLE `types` (

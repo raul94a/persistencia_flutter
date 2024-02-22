@@ -244,6 +244,7 @@ class StatsTab extends ConsumerWidget {
           height: 10.0,
         ),
         ...watchedPokemon.stats
+            .toBaseStats()
             .map((e) => StatRow(
                   statName: e.maybeGetShorterName(),
                   statFraction: e.fraction,
