@@ -110,7 +110,7 @@ class _PokemonPictureState extends State<PokemonPicture>
               height: _animation.value,
               child: SvgPicture.network(
                 widget.svg,
-                fit: BoxFit.fill,
+                fit: BoxFit.contain,
               ),
             );
           }),
